@@ -14,6 +14,19 @@ typedef enum MetaCommandResult {
     META_COMMAND_UNRECOGNIZED_COMMAND
 } MetaCommandResult;
 
+typedef enum StatementType{
+    STATEMENT_INSERT,
+    STATEMENT_SELECT
+}StatementType;
+
+typedef enum PrepareResult{
+    PREPARE_SUCCESS,
+    PREPARE_UNRECOGNIZED_STATEMENT
+}PrepareResult;
+
+typedef struct Statement{
+    StatementType type;
+}Statement;
 
 InputBuffer* new_input_buffer(){
     InputBuffer* new = malloc(sizeof(InputBuffer));
@@ -53,9 +66,37 @@ MetaCommandResult do_meta_command(InputBuffer* input){
     }
 }
 
+PrepareResult prepare_statement(InputBuffer* input, Statement* statement){
+    if(strncmp(input->buffer, "insert", 6)==0){
+        statement->type = STATEMENT_INSERT;
+        return PREPARE_SUCCESS;
+    }else if(strncmp(input->buffer, "select", 6)==0){
+        statement->type = STATEMENT_SELECT;
+        return PREPARE_SUCCESS;
+    }
+    return PREPARE_UNRECOGNIZED_STATEMENT;
+}
+
+void execute_statement(Statement* statement){
+    switch (statement->type)
+    {
+    case  STATEMENT_INSERT:
+        printf("This is where you would do an insert.\n");
+        break;
+    case STATEMENT_SELECT:
+        printf("This is where you do a select.\n");
+        break;
+    default:
+        break;
+    }
+}
+
+
 
 int main(int argc, char* argv[]){
     InputBuffer* read = new_input_buffer();
+    // Statement* statement = malloc(sizeof(Statement)); //why won't this work?
+    Statement statement;
     while(true){
         print_prompt();
         read_input(read);
@@ -72,6 +113,10 @@ int main(int argc, char* argv[]){
             //     break;
             }
         }
+
+        prepare_statement(read, &statement);
+        execute_statement(&statement);
+
     }
     return 0;
 }

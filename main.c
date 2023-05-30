@@ -9,6 +9,12 @@ typedef struct InputBuffer{
     ssize_t input_length;
 } InputBuffer;
 
+typedef enum MetaCommandResult {
+    META_COMMAND_SUCCESS,
+    META_COMMAND_UNRECOGNIZED_COMMAND
+} MetaCommandResult;
+
+
 InputBuffer* new_input_buffer(){
     InputBuffer* new = malloc(sizeof(InputBuffer));
     new->buffer = NULL;
@@ -37,19 +43,35 @@ void close_input_buffer(InputBuffer* input){
 
 void print_prompt() { printf("sqlite> "); }
 
+MetaCommandResult do_meta_command(InputBuffer* input){
+    if (strcmp(input->buffer, ".exit") == 0){
+        close_input_buffer(input);
+        exit(EXIT_SUCCESS);
+        // return META_COMMAND_SUCCESS; // Not needed ig
+    }else{
+        return META_COMMAND_UNRECOGNIZED_COMMAND;
+    }
+}
+
 
 int main(int argc, char* argv[]){
     InputBuffer* read = new_input_buffer();
     while(true){
         print_prompt();
         read_input(read);
-        if(strcmp(read->buffer, ".exit") == 0){
-            close_input_buffer(read);
-            exit(EXIT_SUCCESS);
-        }else{
-            printf("Unrecognized command '%s' .\n", read->buffer);
+        if(read->buffer[0] == '.'){
+            switch (do_meta_command(read))
+            {
+            case META_COMMAND_SUCCESS:
+                continue;
+                // break;
+            case META_COMMAND_UNRECOGNIZED_COMMAND:
+                printf("Unrecognized command '%s' .\n", read->buffer);
+                continue;
+            // default:
+            //     break;
+            }
         }
-
     }
     return 0;
 }

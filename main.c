@@ -113,8 +113,16 @@ int main(int argc, char* argv[]){
             //     break;
             }
         }
+        switch (prepare_statement(read, &statement)){
+            case PREPARE_SUCCESS:
+                break;
 
-        prepare_statement(read, &statement);
+            case PREPARE_UNRECOGNIZED_STATEMENT:
+                printf("Unrecognized keyword at start of '%s'.\n", read->buffer);
+                continue;
+        }
+
+        
         execute_statement(&statement);
 
     }

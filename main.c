@@ -87,6 +87,19 @@ PrepareResult prepare_statement(InputBuffer* input, Statement* statement){
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
+typedef enum ExecuteResult{
+    EXECUTE_SUCCESS,
+    EXECUTE_TABLE_FULL
+}ExecuteResult;
+
+ExecuteResult execute_insert(){
+    return EXECUTE_SUCCESS;
+}
+
+ExecuteResult execute_select(){
+    return EXECUTE_SUCCESS;
+}
+
 ExecuteResult execute_statement(Statement* statement){
     switch (statement->type)
     {
@@ -157,11 +170,6 @@ void deserialize_row(Row* destination, void* source){
 }
 
 
-typedef enum ExecuteResult{
-    EXECUTE_SUCCESS,
-    EXECUTE_TABLE_FULL
-}ExecuteResult;
-
 void* row_slot(Table* table, uint32_t row_num){
     uint32_t page_num = row_num/ROWS_PER_PAGE;
     uint32_t row_offset = row_num%ROWS_PER_PAGE;
@@ -169,11 +177,9 @@ void* row_slot(Table* table, uint32_t row_num){
     if(page == NULL){
         page = table->pages[page_num] = malloc(PAGE_SIZE);
     }
-    uint32_t byte_offset = page + row_offset*ROW_SIZE;
+    uint32_t byte_offset = row_offset*ROW_SIZE;
     return page+byte_offset;
 }
-
-void
 
 
 int main(int argc, char* argv[]){

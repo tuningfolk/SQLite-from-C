@@ -11,4 +11,4 @@ What format is a prepared statement saved in ?
 sqlite has fewer features thatn MySQL or PostgreSQL so easier to code
 The entire database is stored in a single file
 
-![title](Images/desi.gif)
+![title](Images/design.gif)

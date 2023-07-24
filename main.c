@@ -36,8 +36,8 @@ typedef enum PrepareResult
 typedef struct Row
 {
     uint32_t id;
-    char username[COLUMN_USERNAME_SIZE];
-    char email[COLUMN_EMAIL_SIZE];
+    char username[COLUMN_USERNAME_SIZE+1]; //+1 for null character
+    char email[COLUMN_EMAIL_SIZE+1];
 } Row;
 typedef struct Statement
 {
@@ -271,8 +271,14 @@ int main(int argc, char *argv[])
             printf("Unrecognized keyword at start of '%s'.\n", read->buffer);
             continue;
         }
-
-        execute_statement(&statement,table);
+        switch(execute_statement(&statement,table)){
+            case(EXECUTE_SUCCESS):
+                printf("EXECUTED.\n");
+                break;
+            case(EXECUTE_TABLE_FULL):
+                printf("Error: Table full.\n");
+                break;
+        }
     }
     return 0;
 }

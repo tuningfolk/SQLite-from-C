@@ -11,4 +11,11 @@ What format is a prepared statement saved in ?
 sqlite has fewer features thatn MySQL or PostgreSQL so easier to code
 The entire database is stored in a single file
 
+
+### SQLite architecture
 ![title](Images/design.gif)
+
+The "front-end" of sqlite is a SQL(?) compiler that parses a string and outputs an internal representation called bytecode.
+This bytecode is passed to the virtual machine, which executes it.
+![SQLite Architecture (https://www.sqlite.org/arch.html)](Images/arch.gif)
+

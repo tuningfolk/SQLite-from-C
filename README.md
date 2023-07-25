@@ -21,8 +21,7 @@ This bytecode is passed to the virtual machine, which executes it.
 
 ### All the things you need to familiarize yourself with
 
-Serialization: The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  
+Serialization ([with the usage of void pointers](/del.c)): The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  
 
-[void pointers](/del.c)  
 
 

@@ -3,7 +3,7 @@ What format is data saved in? (in memory and on disk)
 When does it move from memory to disk?  
 Why can there be only one primary key per table? (?)  
 How does rolling back a transaction work (?)  
-How are indexed formatted (?)  
+How are indexes formatted (?)  
 When and how does a full table scan work (?)  
 What format is a prepared statement saved in ?  
 

@@ -234,6 +234,7 @@ int main(int argc, char* argv[]){
             }
         }
         //if not a meta command ==> SQL command
+        Statement statement;
         switch(prepare_statement(input_buffer,&statement)){
             case(PREPARE_SUCCESS): break;
             case(PREPARE_UNRECOGNIZED_STATEMENT):

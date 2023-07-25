@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include<string.h>
+#include<stdint.h>
 
 typedef struct
 {
@@ -36,9 +37,49 @@ typedef enum{
     STATEMENT_SELECT
 } StatementType;
 
+#define COLUMN_USERNAME_SIZE 32
+#define COLUMN_EMAIL_SIZE 255
+typedef struct {
+    uint32_t id;
+    char username[COLUMN_USERNAME_SIZE];
+    char email[COLUMN_EMAIL_SIZE];
+} Row;
+// (Struct*)0 is a null pointer but does not get dereferenced by
+// -> cuz here sizeof simply returns the amount of bytes allocated by definition of the data type ( I hope this is right)
+#define size_of_attribute(Struct,Attribute) sizeof(((Struct*)0)->Attribute)
+//int32_t = fixed size of 32 bits unlike int (which can have any size>=16 bits)
+const uint32_t ID_SIZE = size_of_attribute(Row,id);
+const uint32_t USERNAME_SIZE = size_of_attribute(Row,username);
+const uint32_t EMAIL_SIZE = size_of_attribute(Row,email);
+
+const uint32_t ID_OFFSET = 0;
+const uint32_t USERNAME_OFFSET = ID_OFFSET+ID_SIZE;
+const uint32_t EMAIL_OFFSET = USERNAME_OFFSET + USERNAME_SIZE;
+
+const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
+
 typedef struct{
     StatementType type;
+    Row row_to_insert; //only used by insert statement
 } Statement;
+
+//Row to memory
+void serialize_row(Row* source, void* destination){
+    memcpy(destination+ID_OFFSET, &(source->id),ID_SIZE);
+    memcpy(destination+USERNAME_OFFSET,&(source->username),USERNAME_SIZE);
+    memcpy(destination+EMAIL_SIZE,&(source->email),EMAIL_SIZE);
+}
+//Memory to row
+void deserialize_row(void* source, Row* destination){
+    memcpy(&(destination->id),source+ID_OFFSET,ID_SIZE);
+    memcpy(&(destination->username),source+USERNAME_OFFSET,USERNAME_SIZE);
+    memcpy(&(destination->email),source+EMAIL_OFFSET,EMAIL_SIZE);
+}
+
+const uint32_t PAGE_SIZE = 4096; //4Kbs
+#define TABLE_MAX_PAGES 100
+const uint32_t ROWS_PER_PAGE = PAGE_SIZE/ROW_SIZE;
+const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES
 
 MetaCommandResult do_meta_command(InputBuffer* input_buffer){
     if (!strcmp(input_buffer->buffer,".exit")){
@@ -104,6 +145,7 @@ void close_input_buffer(InputBuffer* input_buffer){
 
 
 int main(int argc, char* argv[]){
+    printf("%d",ROW_SIZE);
     InputBuffer* input_buffer =new_input_buffer();
     Statement statement;
     while(true){

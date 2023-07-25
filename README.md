@@ -8,8 +8,8 @@ When and how does a full table scan work (?)
 What format is a prepared statement saved in ?  
 
 ### Points to note
-sqlite has fewer features thatn MySQL or PostgreSQL so easier to code  
-The entire database is stored in a single file  
+sqlite has fewer features thatn MySQL or PostgreSQL so easier to code.  
+The entire database is stored in a single file.  
 
 
 ### SQLite architecture

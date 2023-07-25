@@ -1,5 +1,5 @@
 ### Some questions to ponder upon
-What format is data saved in? (in memory and on disk)
+What format is data saved in? (in memory and on disk)\n
 When does it move from memory to disk?
 Why can there be only one primary key per table? (?)
 How does rolling back a transaction work (?)

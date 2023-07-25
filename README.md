@@ -17,7 +17,7 @@ The entire database is stored in a single file
 
 The "front-end" of sqlite is a SQL(?) compiler that parses a string and outputs an internal representation called bytecode.
 This bytecode is passed to the virtual machine, which executes it.
-![SQLite Architecture](https://www.sqlite.org/arch.html)(Images/arch.gif)
+[SQLite Architecture](https://www.sqlite.org/arch.html)(Images/arch.gif)
 
 ### All the things you need to familiarize yourself with
 

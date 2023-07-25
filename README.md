@@ -23,6 +23,6 @@ This bytecode is passed to the virtual machine, which executes it.
 
 Serialization: The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database
 
-![void pointers](/projects2/repos/SQLite-from-C/del.c)void pointers:
+![void pointers](/del.c)void pointers:
 
 

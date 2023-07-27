@@ -133,7 +133,7 @@ ExecuteResult execute_select(Statement* statement, Table* table){
 }
 MetaCommandResult do_meta_command(InputBuffer* input_buffer,Table* table){
     if (!strcmp(input_buffer->buffer,".exit")){
-        printf("freed\n");
+        // printf("freed\n");
         free(table);
         exit(EXIT_SUCCESS);
     }else{
@@ -255,6 +255,6 @@ int main(int argc, char* argv[]){
         }
     }
     free_table(table);
-    printf("freed\n");
+    // printf("freed\n");
     return 0;
 }

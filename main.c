@@ -75,7 +75,7 @@ typedef struct{
 void serialize_row(Row* source, void* destination){
     memcpy(destination+ID_OFFSET, &(source->id),ID_SIZE);
     memcpy(destination+USERNAME_OFFSET,&(source->username),USERNAME_SIZE);
-    memcpy(destination+EMAIL_SIZE,&(source->email),EMAIL_SIZE);
+    memcpy(destination+EMAIL_OFFSET,&(source->email),EMAIL_SIZE);
 }
 //Memory to row
 void deserialize_row(void* source, Row* destination){
@@ -117,6 +117,7 @@ ExecuteResult execute_insert(Statement* statement,Table* table){
         return EXECUTE_TABLE_FULL;
     }
     Row* row_to_insert = &(statement->row_to_insert);
+    // printf("%s",row_to_insert->email);
     serialize_row(row_to_insert,row_slot(table,table->num_rows));
     table->num_rows += 1;
     return EXECUTE_SUCCESS;
@@ -242,10 +243,16 @@ int main(int argc, char* argv[]){
                     input_buffer->buffer);
                 //Read input again
                 continue;
-        }
+        } 
 
-        execute_statement(&statement,table);
-        printf("Executed.\n");
+        switch (execute_statement(&statement,table)){
+            case (EXECUTE_SUCCESS):
+                printf("Executed.\n");
+                break;
+            case (EXECUTE_TABLE_FULL):
+                printf("Error: Table full.\n");
+                break;
+        }
     }
     free_table(table);
     printf("freed\n");

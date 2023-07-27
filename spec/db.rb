@@ -14,17 +14,20 @@ describe 'database' do
       raw_output.split("\n")
     end
   
-    it 'inserts and retrieves a row' do
-      result = run_script([
-        "insert 1 user1 person1@example.com",
-        "select",
-        ".exit",
-      ])
-      expect(result).to match_array([
-        "db > Executed.",
-        "db > (1, user1, person1@example.com)",
-        "Executed.",
-        "db > ",
-      ])
-    end
+    it 'allows inserting strings that are the maximum length' do
+        long_username = "a"*32
+        long_email = "a"*255
+        script = [
+          "insert 1 #{long_username} #{long_email}",
+          "select",
+          ".exit",
+        ]
+        result = run_script(script)
+        expect(result).to match_array([
+          "db > Executed.",
+          "db > (1, #{long_username}, #{long_email})",
+          "Executed.",
+          "db > ",
+        ])
+      end
   end

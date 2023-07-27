@@ -49,8 +49,8 @@ typedef enum{
 #define COLUMN_EMAIL_SIZE 255
 typedef struct {
     uint32_t id;
-    char username[COLUMN_USERNAME_SIZE];
-    char email[COLUMN_EMAIL_SIZE];
+    char username[COLUMN_USERNAME_SIZE+1];
+    char email[COLUMN_EMAIL_SIZE+1];
 } Row;
 // (Struct*)0 is a null pointer but does not get dereferenced by
 // -> cuz here sizeof simply returns the amount of bytes allocated by definition of the data type ( I hope this is right)

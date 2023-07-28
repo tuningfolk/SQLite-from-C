@@ -21,7 +21,7 @@ The "front-end" of sqlite is a SQL(?) compiler that parses a string and outputs 
 This bytecode is passed to the virtual machine, which executes it.  
 [SQLite Architecture](https://www.sqlite.org/arch.html)
 
-### Jargon
+## Jargon
 
 Serialization ([with the usage of void pointers](/del.c)): The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  
 

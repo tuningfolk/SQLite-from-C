@@ -15,6 +15,11 @@ The entire database is stored in a single file.
 
 [C]: lseek returns the resulting offset position of the pointer as measured in bytes from the beginning of the file.  
 
+Things you might want to do with cursors:  
+* Create a cursor at the beginning of the table.
+* Create a cursor at end of the table
+* Access the row the cursor is pointing to.
+* Advance the cursor to the next one
 
 ### SQLite architecture
 ![title](Images/design.gif)

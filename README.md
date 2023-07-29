@@ -13,7 +13,7 @@ What format is a prepared statement saved in ?
 sqlite has fewer features thatn MySQL or PostgreSQL so easier to code.  
 The entire database is stored in a single file.  
 
-[C]: lseek returns the relative position of the pointer wrt the beginning of the file.  
+[C]: lseek returns the resulting offset position of the pointer as measured in bytes from the beginning of the file.  
 
 
 ### SQLite architecture

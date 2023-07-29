@@ -1,8 +1,11 @@
+#include<errno.h> //preprocessor macro used for error indication
+#include<fcntl.h> //for open()
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
 #include<string.h>
 #include<stdint.h>
+#include<unistd.h> //for open()
 
 typedef struct
 {
@@ -91,18 +94,29 @@ const uint32_t PAGE_SIZE = 4096; //4Kbs same as a page used in most virtual memo
 const uint32_t ROWS_PER_PAGE = PAGE_SIZE/ROW_SIZE; //4096/291 = 14
 const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
+
+//The Pager struct: accesses file and page cache
+typedef struct{
+    int file_descriptor;
+    uint32_t file_length;
+    void* pages[TABLE_MAX_PAGES];
+}Pager;
+
 typedef struct{
     uint32_t num_rows;
-    void* pages[TABLE_MAX_PAGES];
+    // void* pages[TABLE_MAX_PAGES];
+    Pager* pager;
 }Table;
+void* get_page(Pager* pager, uint32_t page_num);
 
 void* row_slot(Table* table,uint32_t row_num){
     uint32_t page_num = row_num/ROWS_PER_PAGE;
-    void* page = table->pages[page_num];
-    if(page==NULL){
-        //Allocate memory only when we need the page
-        page = table->pages[page_num] = malloc(PAGE_SIZE);
-    }
+    // void* page = table->pages[page_num];
+    // if(page==NULL){
+    //     //Allocate memory only when we need the page
+    //     page = table->pages[page_num] = malloc(PAGE_SIZE);
+    // }
+    void* page = get_page(table->pager,page_num);
     uint32_t row_offset = row_num % ROWS_PER_PAGE;
     uint32_t byte_offset = row_offset * ROW_SIZE;
     return page + byte_offset;
@@ -133,10 +147,12 @@ ExecuteResult execute_select(Statement* statement, Table* table){
     }
     return EXECUTE_SUCCESS;
 }
+void db_close(Table* table);
 MetaCommandResult do_meta_command(InputBuffer* input_buffer,Table* table){
     if (!strcmp(input_buffer->buffer,".exit")){
         // printf("freed\n");
-        free(table);
+        // free(table);
+        db_close(table);
         exit(EXIT_SUCCESS);
     }else{
         return META_COMMAND_UNRECOGNIZED_COMMAND;
@@ -208,20 +224,138 @@ InputBuffer* new_input_buffer(){
 
     return input_buffer;
 }
-Table* new_table(){
-    Table* table = malloc(sizeof(Table));
-    table->num_rows = 0;
-    for(uint32_t i = 0; i<TABLE_MAX_PAGES; i++){
-        table->pages[i] = NULL;
+Pager* pager_open(const char* filename){
+    int fd = open(filename, 
+                O_RDWR| //Read/write mode
+                    O_CREAT, //create file if it does not exit
+                S_IWUSR | //user write permission
+                    S_IRUSR ); //user read permission
+    if(fd == -1){
+        printf("Unable to open file\n");
+        exit(EXIT_FAILURE);
     }
+    //use off_t for file sizes
+    off_t file_length = lseek(fd,0,SEEK_END);
+
+    Pager* pager = malloc(sizeof(Pager));
+    pager->file_descriptor = fd;
+    pager->file_length = file_length;
+    for(uint32_t i = 0;i< TABLE_MAX_PAGES; i++){
+        pager->pages[i] = NULL;
+    }
+    return pager;
+}
+// Table* new_table(){
+Table* db_open(const char* filename){
+    Pager* pager = pager_open(filename);
+    uint32_t num_rows = pager->file_length / ROW_SIZE;
+    Table* table = malloc(sizeof(Table));
+    table->num_rows = num_rows; //if new file table->num_rows = 0
+    table->pager = pager;
     return table;
 }
-void free_table(Table* table){
-    for(uint32_t i = 0; i<TABLE_MAX_PAGES; i++){
-        free(table->pages[i]);
+
+void* get_page(Pager* pager, uint32_t page_num){
+    if(page_num > TABLE_MAX_PAGES){
+        printf("Tried to fetch page number out of bounds. %d > %d \n",
+        page_num,TABLE_MAX_PAGES);
+        exit(EXIT_FAILURE);
     }
+
+    if(pager->pages[page_num] == NULL){
+        //Cache miss, Allocate memory and load from file
+        void* page = malloc(PAGE_SIZE);
+        uint32_t num_pages = pager->file_length/PAGE_SIZE;
+        if(pager->file_length%PAGE_SIZE!=0){
+            num_pages += 1;
+        }
+        // if the requested page_num is within the bounds of the file.
+        if(page_num <= num_pages){
+            /*set the file offset to the beginning of the desired page (page_num*PAGE_SIZE)*/
+            lseek(pager->file_descriptor, page_num*PAGE_SIZE, SEEK_SET); 
+            //reads PAGE_SIZE no. of bytes from the file descriptor to the buffer (page)
+            ssize_t bytes_read = read(pager->file_descriptor, page, PAGE_SIZE);        
+            if(bytes_read == -1){
+                printf("Error reading file: %d\n", errno);
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        pager->pages[page_num] = page;
+    }
+    return pager->pages[page_num];
+
+}
+
+//size is also needed cuz of the possibility of partial pages
+void pager_flush(Pager* pager, uint32_t page_num, uint32_t size){
+    if(pager->pages[page_num]==NULL){
+        printf("Tried to flush null page\n");
+        exit(EXIT_FAILURE);
+    }
+
+    off_t offset= lseek(pager->file_descriptor, page_num*PAGE_SIZE, SEEK_SET);
+    if(offset==-1){
+        printf("Error seeking: %d\n", errno);
+        exit(EXIT_FAILURE);
+    }
+
+    ssize_t bytes_written = 
+        write(pager->file_descriptor, pager->pages[page_num],size);
+    if(bytes_written == -1){
+        printf("Error writing: %d\n",errno);
+        exit(EXIT_FAILURE);
+    }
+}
+
+//flushes the page cache to disk, closes the db file, frees Pager and Table data structures
+void db_close(Table* table){
+    Pager* pager = table->pager;
+    uint32_t num_full_pages = table->num_rows/ROWS_PER_PAGE;
+
+    for(uint32_t i = 0; i<num_full_pages; i++){
+        if(pager->pages[i] == NULL){
+            continue;
+        }
+        pager_flush(pager, i , PAGE_SIZE);
+        free(pager->pages[i]);
+        pager->pages[i] = NULL;
+    }
+
+    //Free partial page
+    uint32_t num_additional_rows = table->num_rows % ROWS_PER_PAGE;
+    if(num_additional_rows > 0){
+        //partial page exists
+        uint32_t page_num = num_full_pages;
+        if(pager->pages[page_num]!=NULL){
+            pager_flush(pager,page_num,num_additional_rows*ROW_SIZE);
+            free(pager->pages[page_num]);
+            pager->pages[page_num] = NULL;
+        }
+    }
+
+    int result = close(pager->file_descriptor);
+    if(result == -1){
+        printf("Error closing db file.\n");
+        exit(EXIT_FAILURE);
+    }
+    //Making sure all pages are freed from memory?
+    for(uint32_t i =0; i<TABLE_MAX_PAGES; i++){
+        void* page = pager->pages[i];
+        if(page){
+            free(page);
+            pager->pages[i] = NULL;
+        }
+    }
+    free(pager);
     free(table);
 }
+// void free_table(Table* table){
+//     for(uint32_t i = 0; i<TABLE_MAX_PAGES; i++){
+//         free(table->pages[i]);
+//     }
+//     free(table);
+// }
 
 //ssize_t getline(char** lineptr, size_t *n, FILE *stream)
 /*lineptr: pointer, if it is NULL, it will be mallocatted by getline
@@ -252,7 +386,13 @@ int main(int argc, char* argv[]){
     // printf("%d",ROWS_PER_PAGE);
     InputBuffer* input_buffer =new_input_buffer();
     Statement statement;
-    Table* table = new_table();
+    // Table* table = new_table();
+    if(argc<2){
+        printf("Must supply a database filename.\n");
+        exit(EXIT_FAILURE);
+    }
+    char* filename = argv[1];
+    Table* table = db_open(filename);
     while(true){
         print_prompt();
         read_input(input_buffer);
@@ -292,7 +432,7 @@ int main(int argc, char* argv[]){
                 break;
         }
     }
-    free_table(table);
+    // free_table(table);
     // printf("freed\n");
     return 0;
 }

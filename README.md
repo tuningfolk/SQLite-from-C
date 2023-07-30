@@ -28,6 +28,15 @@ The "front-end" of sqlite is a SQL(?) compiler that parses a string and outputs 
 This bytecode is passed to the virtual machine, which executes it.  
 [SQLite Architecture](https://www.sqlite.org/arch.html)
 
+### B-Tree
+ |**B-tree**|**B+ tree**
+:-----:|:-----:|:-----:
+Pronounced|“Bee Tree”|“Bee Plus Tree”
+Used to store|Indexes|Tables
+Internal nodes store keys|Yes|Yes
+Internal nodes store values|Yes|No
+Number of children per node|Less|More
+Internal nodes vs. leaf nodes|Same structure|Different structure
 ## Jargon
 
 Serialization ([with the usage of void pointers](/del.c)): The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  

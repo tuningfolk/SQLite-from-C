@@ -29,8 +29,8 @@ This bytecode is passed to the virtual machine, which executes it.
 [SQLite Architecture](https://www.sqlite.org/arch.html)
 
 ### B-Tree
- |**B-tree**|**B+ tree**|
-|-----|-----|-----|
+| |**B-tree**|**B+ tree**|
+|:-----:|:-----:|:-----:|
 Pronounced|“Bee Tree”|“Bee Plus Tree”
 Used to store|Indexes|Tables
 Internal nodes store keys|Yes|Yes

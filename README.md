@@ -37,6 +37,12 @@ Internal nodes store keys|Yes|Yes
 Internal nodes store values|Yes|No
 Number of children per node|Less|More
 Internal nodes vs. leaf nodes|Same structure|Different structure
+
+m = tree's order
+ceil(m/2)<=children of each node<=m
+
+
+
 ## Jargon
 
 Serialization ([with the usage of void pointers](/del.c)): The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  

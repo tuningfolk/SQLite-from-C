@@ -49,7 +49,6 @@ typedef enum{
 }ExecuteResult;
 
 
-
 #define COLUMN_USERNAME_SIZE 32
 #define COLUMN_EMAIL_SIZE 255
 typedef struct {
@@ -94,6 +93,24 @@ const uint32_t PAGE_SIZE = 4096; //4Kbs same as a page used in most virtual memo
 const uint32_t ROWS_PER_PAGE = PAGE_SIZE/ROW_SIZE; //4096/291 = 14
 const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
+//To keep track of node type
+//Each node corresponds to one page
+typedef enum{
+    NODE_INTERNAL,
+    NODE_LEAF
+}NodeType;
+
+//Common Node header format
+//sizeof(uint8_t) indicates 1 byte of memory
+const uint32_t NODE_TYPE_SIZE = sizeof(uint8_t);
+//offset 0 indicates node type field starts at the beginning
+const uint32_t NODE_TYPE_OFFSET = 0; 
+const uint32_t IS_ROOT_SIZE = sizeof(uint8_t);
+const uint32_t IS_ROOT_OFFSET = NODE_TYPE_SIZE;
+const uint32_t PARENT_POINTER_SIZE = sizeof(uint32_t);
+const uint32_t PARENT_POINTER_OFFSET = IS_ROOT_OFFSET+IS_ROOT_SIZE;
+const uint8_t COMMON_NODE_HEADER_SIZE = 
+        NODE_TYPE_SIZE + IS_ROOT_SIZE + PARENT_POINTER_SIZE;
 
 //The Pager struct: accesses file and page cache
 typedef struct{

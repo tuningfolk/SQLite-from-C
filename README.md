@@ -41,6 +41,15 @@ Internal nodes vs. leaf nodes|Same structure|Different structure
 m = tree's order
 ceil(m/2)<=children of each node<=m
 
+| For an order-m tree… | Internal Node                 | Leaf Node           |
+|----------------------|-------------------------------|---------------------|
+| Stores               | keys and pointers to children | keys and values     |
+| Number of keys       | up to m-1                     | as many as will fit |
+| Number of pointers   | number of keys + 1            | none                |
+| Number of values     | none                          | number of keys      |
+| Key purpose          | used for routing              | paired with value   |
+| Stores values?       | No                            | Yes                 |
+
 
 
 ## Jargon
@@ -51,6 +60,3 @@ Serialization ([with the usage of void pointers](/del.c)): The process of conver
 
 [File Descriptor](https://www.geeksforgeeks.org/input-output-system-calls-c-create-open-close-read-write/): An integer that uniquely identifies an open file of the process.  
 File Descriptor table: Collection of integer array indices that are file descriptors in which elements are pointers to file table entries. One unique file descriptors table is provided in the operating system for each process.
-
-
-

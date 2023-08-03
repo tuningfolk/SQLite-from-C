@@ -93,6 +93,7 @@ const uint32_t PAGE_SIZE = 4096; //4Kbs same as a page used in most virtual memo
 // const uint32_t ROWS_PER_PAGE = PAGE_SIZE/ROW_SIZE; //4096/291 = 14
 // const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
+//Leaf nodes and internal nodes have different layouts.
 //To keep track of node type
 //Each node corresponds to one page
 typedef enum{
@@ -103,6 +104,9 @@ typedef enum{
 //Every node is going to take up exactly one page
 
 //Common Node header format
+/* Metadata needed to be stored in a header at the beginning of
+    the page: what type of node it is, whether root node or not,
+    pointer to its parent (3 total)*/
 //sizeof(uint8_t) indicates 1 byte of memory
 const uint32_t NODE_TYPE_SIZE = sizeof(uint8_t);
 //offset 0 indicates node type field starts at the beginning
@@ -115,6 +119,9 @@ const uint8_t COMMON_NODE_HEADER_SIZE =
         NODE_TYPE_SIZE + IS_ROOT_SIZE + PARENT_POINTER_SIZE; //or = PARENT_POINTER_OFFSET + PARENT_POINTER_SIZE
 
 /*Leaf Node Format*/
+/* In addition to the common header fields,
+LEAF nodes need to store how many "cells" they contain.
+A cell = key:value pair*/
 const uint32_t LEAF_NODE_NUM_CELLS_SIZE = sizeof(uint32_t);
 const uint32_t LEAF_NODE_NUM_CELLS_OFFSET = COMMON_NODE_HEADER_SIZE;
 const uint32_t LEAF_NODE_HEADER_SIZE = 
@@ -123,7 +130,9 @@ const uint32_t LEAF_NODE_HEADER_SIZE =
 /*Leaf Node Body Layout*/
 /*The code to access keys, values and metadata all involve
 pointer arithmetic using the constants we just defined*/
-
+/*The body of a leaf node = array of cells*/
+/* Each key is followed by a value*/
+/*value = serialized row*/
 const uint32_t LEAF_NODE_KEY_SIZE = sizeof(uint32_t);
 const uint32_t LEAF_NODE_KEY_OFFSET = 0;
 const uint32_t LEAF_NODE_VALUE_SIZE = ROW_SIZE;

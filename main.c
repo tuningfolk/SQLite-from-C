@@ -61,14 +61,14 @@ typedef struct {
 #define size_of_attribute(Struct,Attribute) sizeof(((Struct*)0)->Attribute)
 //int32_t = fixed size of 32 bits unlike int (which can have any size>=16 bits)
 const uint32_t ID_SIZE = size_of_attribute(Row,id); // 4 bytes
-const uint32_t USERNAME_SIZE = size_of_attribute(Row,username); // 32 bytes
-const uint32_t EMAIL_SIZE = size_of_attribute(Row,email); //255 bytes
+const uint32_t USERNAME_SIZE = size_of_attribute(Row,username); // 33 bytes
+const uint32_t EMAIL_SIZE = size_of_attribute(Row,email); //256 bytes
 
 const uint32_t ID_OFFSET = 0;
 const uint32_t USERNAME_OFFSET = ID_OFFSET+ID_SIZE;
 const uint32_t EMAIL_OFFSET = USERNAME_OFFSET + USERNAME_SIZE;
 
-const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
+const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE; //293 bytes
 
 typedef struct{
     StatementType type;
@@ -128,8 +128,6 @@ const uint32_t LEAF_NODE_HEADER_SIZE =
         COMMON_NODE_HEADER_SIZE + LEAF_NODE_NUM_CELLS_SIZE;
 
 /*Leaf Node Body Layout*/
-/*The code to access keys, values and metadata all involve
-pointer arithmetic using the constants we just defined*/
 /*The body of a leaf node = array of cells*/
 /* Each key is followed by a value*/
 /*value = serialized row*/
@@ -146,6 +144,8 @@ const uint32_t LEAF_NODE_MAX_CELLS =
 /*Accessing Leaf Node Fields*/
 /* These methods return a pointer in question,
 so they can be used as both a getter and a setter*/
+/*The code to access keys, values and metadata all involve
+pointer arithmetic using the constants we just defined*/
 uint32_t* leaf_node_num_cells(void* node){
     return node+LEAF_NODE_NUM_CELLS_OFFSET;
 }
@@ -163,7 +163,8 @@ void* leaf_node_value(void* node, uint32_t cell_num){
 }
 
 void initialize_leaf_node(void* node){
-    *leaf_node_num_cells(node) = 0;
+    uint32_t* num_cells_offset = leaf_node_num_cells(node);
+    *num_cells_offset = 0;
 }
 
 
@@ -187,6 +188,7 @@ typedef struct{
     uint32_t cell_num;
     bool end_of_table; //indicates a position one past the last element.
 }Cursor;
+void* get_page(Pager* pager, uint32_t page_num);
 
 Cursor* table_start(Table* table){
     Cursor* cursor = malloc(sizeof(Cursor));
@@ -215,8 +217,6 @@ Cursor* table_end(Table* table){
     return cursor;
 }
 
-void* get_page(Pager* pager, uint32_t page_num);
-
 void* cursor_value(Cursor* cursor){
     uint32_t page_num = cursor->page_num;
     void* page = get_page(cursor->table->pager,page_num);
@@ -236,6 +236,28 @@ void cursor_advance(Cursor* cursor){
         cursor->end_of_table = true;
     }
 }
+void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value){
+    void* node = get_page(cursor->table->pager,cursor->page_num);
+
+    uint32_t num_cells = *leaf_node_num_cells(node);
+    if(num_cells>=LEAF_NODE_MAX_CELLS){
+        //Node full
+        printf("Need to implement splitting of a leaf node.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(cursor->cell_num < num_cells){
+        //Insert row at pos cell_num
+        //shift all the following cells to the right
+        for(uint32_t i = num_cells; i>cursor->cell_num; i--){
+            memcpy(leaf_node_cell(node,i),leaf_node_cell(node,i-1),LEAF_NODE_CELL_SIZE);
+        }
+    }
+    //now insert into cell_num
+    *(leaf_node_num_cells(node)) += 1;
+    *(leaf_node_key(node,cursor->cell_num)) = key;
+    serialize_row(value,leaf_node_value(node,cursor->cell_num));
+}
 
 void print_prompt(){ printf("db > ");}
 
@@ -243,16 +265,34 @@ void print_row(Row* row){
     printf("(%d, %s, %s)\n",row->id, row->username, row->email);
 }
 
+void print_constants(){
+    printf("ROW_SIZE: %d\n",ROW_SIZE);
+    printf("COMMON_NODE_HEADER_SIZE: %d\n", COMMON_NODE_HEADER_SIZE);
+    printf("LEAF_NODE_HEADER_SIZE: %d\n",LEAF_NODE_HEADER_SIZE);
+    printf("LEAF_NODE_CELL_SIZE: %d\n",LEAF_NODE_CELL_SIZE);
+    printf("LEAF_NODE_SPACE_FOR_CELLS: %d\n", LEAF_NODE_SPACE_FOR_CELLS);
+    printf("LEAF_NODE_MAX_CELLS: %d\n",LEAF_NODE_MAX_CELLS);
+}
+
+void print_leaf_node(void* node){
+    uint32_t num_cells = *leaf_node_num_cells(node);
+    
+}
+
 ExecuteResult execute_insert(Statement* statement,Table* table){
-    if(table->num_rows >= TABLE_MAX_ROWS){
+    // if(table->num_rows >= TABLE_MAX_ROWS){
+    //     return EXECUTE_TABLE_FULL;
+    // }
+    void* node = get_page(table->pager,table->root_page_num);
+    if(*(leaf_node_num_cells(node)) >=LEAF_NODE_MAX_CELLS){
         return EXECUTE_TABLE_FULL;
     }
+
     Row* row_to_insert = &(statement->row_to_insert);
-    // printf("%s",row_to_insert->email);
-    // serialize_row(row_to_insert,row_slot(table,table->num_rows));
     Cursor* cursor = table_end(table);
-    serialize_row(row_to_insert, cursor_value(cursor));
-    table->num_rows += 1;
+    // serialize_row(row_to_insert, cursor_value(cursor));
+    // table->num_rows += 1;
+    leaf_node_insert(cursor,row_to_insert->id,row_to_insert);
 
     free(cursor);
     return EXECUTE_SUCCESS;
@@ -450,9 +490,6 @@ void pager_flush(Pager* pager, uint32_t page_num){
     }
 }
 
-void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value){
-    void* node = get_page(cursor->table->pager,cursor->page_num);
-}
 
 //flushes the page cache to disk, closes the db file, frees Pager and Table data structures
 void db_close(Table* table){
@@ -539,6 +576,7 @@ int main(int argc, char* argv[]){
     }
     char* filename = argv[1];
     Table* table = db_open(filename);
+    print_constants();
     while(true){
         print_prompt();
         read_input(input_buffer);

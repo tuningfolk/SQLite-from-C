@@ -327,7 +327,7 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer,Table* table){
         printf("Tree:\n");
         print_leaf_node(get_page(table->pager,0));
         return META_COMMAND_SUCCESS;
-    }else if(!strcmp(input_buffer->buffer,"constants")){
+    }else if(!strcmp(input_buffer->buffer,".constants")){
         printf("Constants:\n");
         print_constants();
         return META_COMMAND_SUCCESS;
@@ -417,6 +417,7 @@ Pager* pager_open(const char* filename){
     Pager* pager = malloc(sizeof(Pager));
     pager->file_descriptor = fd;
     pager->file_length = file_length;
+    pager->num_pages = (file_length/PAGE_SIZE);
     
     if(file_length % PAGE_SIZE !=0){
         printf("Db file is not a whole no. of pages. Corrupt file.\n");
@@ -500,6 +501,7 @@ void pager_flush(Pager* pager, uint32_t page_num){
         printf("Error writing: %d\n",errno);
         exit(EXIT_FAILURE);
     }
+    // printf("saved\n");
 }
 
 

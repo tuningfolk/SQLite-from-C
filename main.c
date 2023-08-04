@@ -276,7 +276,11 @@ void print_constants(){
 
 void print_leaf_node(void* node){
     uint32_t num_cells = *leaf_node_num_cells(node);
-    
+    printf("leaf (size %d)\n",num_cells);
+    for (uint32_t i = 0; i<num_cells; i++){
+        uint32_t key = *leaf_node_key(node,i);
+        printf("  - %d : %d\n",i,key);
+    }
 }
 
 ExecuteResult execute_insert(Statement* statement,Table* table){
@@ -319,6 +323,14 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer,Table* table){
         // free(table);
         db_close(table);
         exit(EXIT_SUCCESS);
+    }else if(!strcmp(input_buffer->buffer,".btree")){
+        printf("Tree:\n");
+        print_leaf_node(get_page(table->pager,0));
+        return META_COMMAND_SUCCESS;
+    }else if(!strcmp(input_buffer->buffer,"constants")){
+        printf("Constants:\n");
+        print_constants();
+        return META_COMMAND_SUCCESS;
     }else{
         return META_COMMAND_UNRECOGNIZED_COMMAND;
     }
@@ -576,7 +588,7 @@ int main(int argc, char* argv[]){
     }
     char* filename = argv[1];
     Table* table = db_open(filename);
-    print_constants();
+    // print_constants();
     while(true){
         print_prompt();
         read_input(input_buffer);

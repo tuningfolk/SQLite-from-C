@@ -56,6 +56,7 @@ Each node will correspond to one page. The root node will exist in page 0. The r
 Every node takes up exactly one page, even it's not full.
 
 ![Leaf node format](Images/leaf-node-format.png)
+![Internal node format](Images/internal-node-format.png)
 ## Jargon
 
 Serialization ([with the usage of void pointers](/del.c)): The process of converting an object’s state to a byte stream. This byte stream can then be saved to a file, sent over a network, or stored in a database  

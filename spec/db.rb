@@ -2,9 +2,7 @@ describe 'database' do
   before do
     `rm -rf test.db`
   end
-
-
-
+  
     def run_script(commands)
       raw_output = nil
       IO.popen("./main test.db", "r+") do |pipe|

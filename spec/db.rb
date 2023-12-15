@@ -1,10 +1,18 @@
+# # spec/spec_helper.rb or spec/rails_helper.rb
+# RSpec.configure do |config|
+#   # Other configuration options...
+#   config.expect_with :rspec do |expectations|
+#     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+#   end
+#   # Other configuration options...
+# end
+
+extend RSpec::Matchers
+
 describe 'database' do
   before do
     `rm -rf test.db`
   end
-
-
-
     def run_script(commands)
       raw_output = nil
       IO.popen("./main test.db", "r+") do |pipe|
@@ -162,7 +170,7 @@ describe 'database' do
           "  - 13",
           "  - 14",
           # "db > Need to implement searching an internal node",
-          "db > Executed."
+          "db > Executed.",
           "db > ",
         ])
       end

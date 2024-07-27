@@ -1,4 +1,4 @@
-#include<errno.h> //preprocessor macro used for error indication
+c#include<errno.h> //preprocessor macro used for error indication
 #include<fcntl.h> //for open()
 #include<stdio.h>
 #include<stdlib.h>
